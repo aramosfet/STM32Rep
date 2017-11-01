@@ -100,3 +100,5 @@ void USART1_Send(uint8_t data)
 	while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
 	USART_SendData(USART1,data);
 }
+
+

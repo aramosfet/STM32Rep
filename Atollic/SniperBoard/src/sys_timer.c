@@ -180,9 +180,9 @@ uint16_t USART_Scanf(uint16_t value,uint8_t len)
 	while (index < len)
 	{
 		/* Loop until RXNE = 1 */
-		while (USART_GetFlagStatus(USART3, USART_FLAG_RXNE) == RESET)
+		while (USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET)
 		{}
-		tmp[index] = (USART_ReceiveData(USART3));
+		tmp[index] = (USART_ReceiveData(USART1));
 		USART1_Send(tmp[index++]);
 		if ((tmp[index - 1] < 0x30) || (tmp[index - 1] > 0x39))
 		{

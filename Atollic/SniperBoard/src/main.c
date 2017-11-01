@@ -93,7 +93,7 @@ int main()
 
 		mac1_service();
 //		printf("-\r");
-		if((display_timeout%1000) == 0){
+		if((display_timeout%10000) == 0){
 			get_RTC();
 			display_date();
 			printf(" : \n");

@@ -13,8 +13,15 @@
 #include "sys_timer.h"
 #include "mac1control.h"
 
+#define rasppi
 
-
+#ifndef rasppi
+#define rdp_count 29
+#define rdpa_count 4
+#else
+#define rdp_count 10
+#define rdpa_count 2
+#endif
 uint8_t macaddr1[6] = {0x48,0x48,0x48,0x48,0x48,0x49};
 uint8_t myip[4] = {192,168,1,98};
 uint8_t gwip[4] = {192,168,1,1};
@@ -28,13 +35,75 @@ uint32_t bac_timeout=0;
 uint16_t plen;
 uint8_t bacnet_found;
 uint8_t invokeid;
-uint8_t bac_inst = 1;
-uint8_t bac_binval[10] = {0,0,0,0,0,0,0,0,0,0};
+uint8_t bac_inst;
+#ifndef rasppi
+uint8_t bac_binval[rdp_count] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+uint8_t bac_anaval[rdpa_count] = {0,0,0,0};
+#else
+uint8_t bac_binval[rdp_count] = {0,0,0,0,0,0,0,0,0,0};
+uint8_t bac_anaval[rdpa_count] = {0,0};
+#endif
 uint8_t dip[4];
 uint16_t dport = 47808;
 uint16_t sport = 47808;
-uint8_t set_bacnet_bin_alarm =0;
+uint16_t set_bacnet_bin_alarm =0;
 uint16_t mac1_pkt_cntr=0;
+
+#ifndef rasppi
+uint16_t readprop_list[rdp_count] = {8,//Binary,:Basement Floor Fire,
+							9,//Binary,:Ground Floor Fire,
+							10,//Binary,:Service Mezz Fire,
+							11,//Binary,:Mezzonine Fire,
+							12,//Binary,:First Floor Fire,
+							13,//Binary,:Second Floor Fire,
+							14,//Binary,:Third Floor Fire,
+							15,//Binary,:Fourth Floor Fire,
+							16,//Binary,:Fifth Floor Fire,
+							17,//Binary,:Sixth Floor Fire,
+							18,//Binary,:Seventh Floor Fire,
+							19,//Binary,:Eighth Floor Fire,
+							20,//Binary,:Nineth Floor Fire,
+							21,//Binary,:Tenth Floor Fire,
+							22,//Binary,:Eleventh Floor Fire,
+							23,//Binary,:Twelth Floor Fire,
+							24,//Binary,:Thirteenth Floor Fire,
+							25,//Binary,:Fourteenth Floor Fire,
+							26,//Binary,:Service Roof,
+							27,//Binary,:Roof,
+							28,//Binary,:Common Fire,
+							29,//Binary,:Common Trouble,
+							38,//Binary,:Single Knock Fire,
+							39,//Binary,:Double Knock Fire,
+							1002,//Binary,:AC FAILURE,
+							1005,//Binary,:LOW BATTERY,
+							1281,//Binary,:UNACKNOWLEDGED FIRE,
+							1282,//Binary,:UNACKNOWLEDGED SUPERVISORY,
+							1283,//Binary,:UNACKNOWLEDGED TROUBLE,
+							};
+
+uint16_t readpropa_list[rdpa_count] = {1441,//Analog,:Fire Alarm,
+							1442,//Analog,:Supervisory Alarm,
+							1443,//Analog,:Troubles,
+							1445//Analog,:Dirty Sensors
+							};
+#else
+uint16_t readprop_list[rdp_count] = {1,//Binary,:Basement Floor Fire,
+							2,//Binary,:Ground Floor Fire,
+							3,//Binary,:Service Mezz Fire,
+							4,//Binary,:Mezzonine Fire,
+							5,//Binary,:First Floor Fire,
+							6,//Binary,:Second Floor Fire,
+							7,//Binary,:Third Floor Fire,
+							8,//Binary,:Fourth Floor Fire,
+							9,//Binary,:Fifth Floor Fire,
+							10//Binary,:Sixth Floor Fire,
+							};
+
+uint16_t readpropa_list[rdpa_count] = {1,//Analog,:Fire Alarm,
+							2//Analog,:Supervisory Alarm,
+							};
+#endif
+uint8_t invoke_id_str[rdp_count+rdpa_count];
 
 #define BUFFER_SIZE 800
 uint8_t buf1[BUFFER_SIZE+1];
@@ -132,12 +201,19 @@ void process_bacnet_reply(uint8_t *buf,uint16_t len)
 {
 	//uint8_t bac_length;
 	uint8_t bac_apdu_offset;
-	//Check bacnet Source port No                        Dest Port No                               Bactnet /IP
+//	uint8_t list_offset;
+//	uint8_t bvlc_len = buf[0x2d];
+//	uint8_t udp_head = 0x29;
+	uint16_t readprop_input = 0;
+	uint16_t i;
+	uint8_t read_list_ptr;
+
+	//Check bacnet Source port No                        Dest Port No                               Bacnet /IP
 	if(((buf[0x22] == 0xba) && (buf[0x23]==0xc0) && (buf[0x24] == 0xba) && (buf[0x25]==0xc0) && (buf[0x2A] == 0x81)) ||
 	   ((buf[0x22] == 0xe4) && (buf[0x23]==0x03) && (buf[0x24] == 0xba) && (buf[0x25]==0xc0) && (buf[0x2A] == 0x81)))
 	{
 		//bac_length = buf[0x2D];
-		bac_apdu_offset = 0;
+		bac_apdu_offset = 0x30;
 		if(buf[0x2F] & 0x20){
 			bac_apdu_offset = bac_apdu_offset+4;
 		}
@@ -146,25 +222,87 @@ void process_bacnet_reply(uint8_t *buf,uint16_t len)
 		}
 		//Check Bacnet I am
 		//printf(" bacnet reply Length %d\n",len);
-		if((buf[0x30+bac_apdu_offset] == 0x10) && (buf[0x31+bac_apdu_offset] == 0x00) && (bacnet_found == 0)){
+		if((buf[bac_apdu_offset] == 0x10) && (buf[bac_apdu_offset+1] == 0x00) && (bacnet_found == 0)){
 			bacdev_ip[0] = buf[0x1A];
 			bacdev_ip[1] = buf[0x1B];
 			bacdev_ip[2] = buf[0x1C];
 			bacdev_ip[3] = buf[0x1D];
 			printf("Bacnet device found on IP %d.%d.%d.%d \n",bacdev_ip[0],bacdev_ip[1],bacdev_ip[2],bacdev_ip[3]);
 			bacnet_found = 1;
-		}else if((buf[0x30] == 0x30) && (buf[0x32] == 0x0E)){
-			//printf("Backnet Read property Reply\n");
-			if((buf[0x37] > 0) && (buf[0x37] <= 10) && (buf[0x3D] < 2) && (buf[0x3D] >= 0)){
-				if((bac_binval[buf[0x37]-1] == 0x00) && (buf[0x3D] == 0x01)){
-					set_bacnet_bin_alarm = buf[0x37]-1;
-				}
-				bac_binval[buf[0x37]-1] = buf[0x3D];
-				printf("Bacnet Binary reply %d  - ",buf[0x37]);
-				printf("Bacnet Binary status %d:%d:%d:%d:%d:%d:%d:%d:%d:%d\n",bac_binval[0],bac_binval[1],bac_binval[2],bac_binval[3],bac_binval[4],bac_binval[5],bac_binval[6],bac_binval[7],bac_binval[8],bac_binval[9]);
-			}else
+		}else if((buf[bac_apdu_offset] == 0x30) && (buf[bac_apdu_offset+2] == 0x0E)) // Read Property Multiple
+		{
+			//printf("1\n");
+			if((buf[bac_apdu_offset+3] == 0x0C) && (buf[bac_apdu_offset+5] == 0xC0)) // Binary input
 			{
-				printf("Invalid Instance No\n");
+				//printf("2\n");
+				readprop_input = ((buf[bac_apdu_offset+6])<<8) | (buf[bac_apdu_offset+7]);
+				read_list_ptr = 0xFF;
+				for(i=0;i<rdp_count;i++){ // Find the readprop_list pointer for the received read prop packet
+					if(readprop_input == readprop_list[i])
+						read_list_ptr = i;
+				}
+				if(read_list_ptr == 0xFF){ // Did not find a valid read input number from existing list
+					printf("exit\n");
+
+					return;
+				}
+
+				i=bac_apdu_offset+8;
+				if(buf[i] == 0x1E){ // Open tag
+					while(i<len)
+					{
+						if(buf[i+1] == 0x29){ // Property Identifier
+							if((buf[i+2] == 0x55) && (buf[i+3] == 0x4E) && (buf[i+4] == 0x91) && (buf[i+6] == 0x4F)){
+								if((bac_binval[read_list_ptr] == 0x00) && (buf[i+5] > 0x01)){
+									set_bacnet_bin_alarm = readprop_list[read_list_ptr];
+								}
+								bac_binval[read_list_ptr] = buf[i+5];
+								printf("Bacnet Binary reply offset %d - %d  - ",i+5, buf[bac_apdu_offset+7]-1);
+								printf("Bacnet Binary status %d:%d:%d:%d:%d:%d:%d:%d:%d:%d\n",bac_binval[0],bac_binval[1],bac_binval[2],bac_binval[3],bac_binval[4],bac_binval[5],bac_binval[6],bac_binval[7],bac_binval[8],bac_binval[9]);
+								return;
+							}
+						}
+						i++;
+					}
+				}
+			}else if((buf[bac_apdu_offset+3] == 0x0C) && (buf[bac_apdu_offset+5] == 0x00)) // Analog input
+			{
+				//printf("3\n");
+				readprop_input = ((buf[bac_apdu_offset+6])<<8) | (buf[bac_apdu_offset+7]);
+				//printf("read id %d \n",readprop_input);
+				read_list_ptr = 0xFF;
+				for(i=0;i<rdpa_count;i++){ // Find the readprop_list pointer for the received read prop packet
+					//printf("read id %d \n",readpropa_list[i]);
+					if(readprop_input == readpropa_list[i]){
+						read_list_ptr = i;
+						break;
+					}
+				}
+				if(read_list_ptr == 0xFF){ // Did not find a valid read input number from existing list
+					//printf("exit\n");
+					return;
+				}
+
+
+				i=bac_apdu_offset+8;
+				if(buf[i] == 0x1E){ // Open tag
+
+					while(i<len)
+					{
+						if(buf[i+1] == 0x29){ // Property Identifier
+							if((buf[i+2] == 0x55) && (buf[i+3] == 0x4E) && (buf[i+4] == 0x44) && (buf[i+9] == 0x4F)){
+//								if((bac_binval[read_list_ptr] == 0x00) && (buf[i+5] > 0x01)){
+//									set_bacnet_bin_alarm = readprop_list[read_list_ptr];
+//								}
+								bac_anaval[read_list_ptr] = (buf[i+5]<<24) |(buf[i+6]<<16) |(buf[i+7]<<8) |(buf[i+8]);
+								printf("Bacnet Analog reply offset %d - %d  - ",i+5, buf[bac_apdu_offset+7]-1);
+								printf(" Value %d,%d,%d,%d \n",buf[i+5] ,buf[i+6] ,buf[i+7] ,buf[i+8]);
+								return;
+							}
+						}
+						i++;
+					}
+				}
 			}
 		}
 	}
@@ -177,14 +315,16 @@ void mac1_tick(void)
 
 		mac1_pkt_cntr++;
 		//printf("MAC1 Pkt Count:%d\n",mac1_pkt_cntr);
-		if(eth_type_is_ip_and_my_ip(buf1,plen))
-		{
+
+//		if(eth_type_is_ip_and_my_ip(buf1,plen))
+//		{
+//			printf("----------------\n");
+//			for(uint16_t q=0;q<plen;q++)
+//				//printf("%d ",buf1[q]);
+//				USART1_Send(buf1[q]);
+//			printf("\n----------------\n");
 			process_bacnet_reply(buf1,plen);
-//				printf("----------------\n");
-//				for(uint16_t q=0;q<plen;q++)
-//					printf("%d ",buf1[q]);
-//				printf("\n----------------\n");
-		}
+//		}
 //		else if((buf1[12] == 0x08) && (buf1[13]==0x06)){
 //			if(buf1[0x15] == 0x02){
 //				printf("ARP Reply Rcvd");
@@ -212,7 +352,6 @@ void mac1_init(void)
 	bac_timeout = Sys_GetTick() + 2000;
 	bacnet_found = 0;
 	invokeid=0;
-	bac_inst = 1;
 }
 void bacnet_whois(void)
 {
@@ -240,7 +379,7 @@ void bacnet_whois(void)
 	//send_udp(buf1,whois_pkt,sizeof(whois_pkt),sport, dip, dport);
 }
 
-void bacnet_read_prop(uint8_t id, uint8_t inst)
+void bacnet_read_prop(uint8_t id, uint16_t inst, uint8_t analogprop)
 {
 	uint16_t i;
 	char bacrd_pkt[] = {0x81,0x0A,0x00,0x13,0x01,0x04,0x02,0x75,0x53,0x0E,0x0C,0x00,0xC0,0x00,0x02,0x1E,0x09,0x08,0x1F};
@@ -261,8 +400,13 @@ void bacnet_read_prop(uint8_t id, uint8_t inst)
 	buf1[3] = 0xFF;
 	buf1[4] = 0xFF;
 	buf1[5] = 0xFF;
+	if(analogprop)
+	{
+		buf1[UDP_DATA_P+12] = 0x00;
+	}
 	buf1[UDP_DATA_P+8] = id;
-	buf1[UDP_DATA_P+14] = inst;
+	buf1[UDP_DATA_P+14] = (uint8_t)((inst & 0xFF00)>>8);
+	buf1[UDP_DATA_P+14] = (uint8_t)(inst & 0x00FF);
 	send_udp_transmit(buf1,sizeof(bacrd_pkt));
 }
 
@@ -275,16 +419,23 @@ void mac1_service(void)
 			printf("Sending Bacnet Who Is \n");
 			bacnet_whois();
 			bac_timeout = Sys_GetTick() + 10000;
+			bac_inst = 0;
 		}else
 		{
-			//for(uint8_t q = 1; q < 11 ; q++){
-			//	bac_inst = q;
-				//printf("Reading bacnet instance %d\n",bac_inst);
-				bacnet_read_prop(invokeid,bac_inst++);
-				bac_timeout = Sys_GetTick() + 5000;
+			if(bac_inst <rdp_count){
+				bacnet_read_prop(invokeid,readprop_list[bac_inst],0);
+				printf("Bacnet read prop %d %d %d Binary \n",invokeid,readprop_list[bac_inst],bac_inst);
+				bac_inst++;
+			}else{
+				bacnet_read_prop(invokeid,readpropa_list[bac_inst-rdp_count],1);
+				printf("Bacnet read prop %d %d %d Analog \n",invokeid,readpropa_list[bac_inst-rdp_count],bac_inst);
+				bac_inst++;
+			}
+			bac_timeout = Sys_GetTick() + 2000;
+			invoke_id_str[bac_inst] = invokeid++;
 			//}
-			if(bac_inst == 11)
-				bac_inst = 1;
+			if(bac_inst >= (rdp_count+rdpa_count))
+				bac_inst = 0;
 		}
 
 	}

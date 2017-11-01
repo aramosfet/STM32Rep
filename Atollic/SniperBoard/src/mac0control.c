@@ -52,7 +52,8 @@ uint32_t periodic_timer;
 
 uint8_t macaddr0[6] = {0x48,0x48,0x48,0x48,0x48,0x47};
 uint32_t app_timeout=0;
-uint8_t tcp_svr_ip[4] = {144,217,91,32};
+//uint8_t tcp_svr_ip[4] = {144,217,91,32};
+uint8_t tcp_svr_ip[4] = {142,44,211,146};  //142.44.211.146
 volatile uint8_t tcp_app_state = 0; //0 - Not connected, 1- TCP Reg State, 2- TCP Alarm state
 void uipclient_appcall(void){
 	//USART3_Send(0x11);

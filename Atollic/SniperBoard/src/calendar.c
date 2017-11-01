@@ -74,6 +74,7 @@ void get_RTC()
 //     counts <<= 16;
 //     counts += RTC_CNTL;
      counts = RTC_GetCounter();
+     counts = counts + 14400; // UTC + 4:00 Dubai time
      //printf("RTC Count %d ",(uint16_t)((counts >> 16 ) & 0x0000FFFF));
      //printf("%d\n",(uint16_t)(counts & 0x0000FFFF));
      //printf("Count:");
@@ -210,15 +211,15 @@ uint32_t set_RTC(uint16_t year,  uint8_t month,  uint8_t date,  uint8_t hour,  u
     counts += ((uint32_t)minute * 60);
     counts += second;
     return(counts);
-    //RCC->APB1ENR |= RCC_APB1ENR_PWREN;
-    //RCC->APB1ENR |= RCC_APB1ENR_BKPEN;
-
-    //PWR->CR |= PWR_CR_DBP;
-    //RTC_SetCounter(counts);
-
-    //while(!(RTC->CRL & RTC_CRL_RTOFF));
-
-    //PWR->CR &= ~PWR_CR_DBP;
+//    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+//    RCC->APB1ENR |= RCC_APB1ENR_BKPEN;
+//
+//    PWR->CR |= PWR_CR_DBP;
+//    RTC_SetCounter(counts);
+//
+//    while(!(RTC->CRL & RTC_CRL_RTOFF));
+//
+//    PWR->CR &= ~PWR_CR_DBP;
 }
 
 //void display_date()
@@ -243,11 +244,11 @@ void display_date()
 
 void set_date(void)
 {
-    current_date.seconds = 30;
-    current_date.minutes = 10;
-    current_date.hours   = 21;
-    current_date.date    = 28;
-    current_date.month   = 5;
+    current_date.seconds = 00;
+    current_date.minutes = 58;
+    current_date.hours   = 17;
+    current_date.date    = 29;
+    current_date.month   = 7;
     current_date.year    = 2017;
     set_RTC(current_date.year,  current_date.month,  current_date.date,  current_date.hours,  current_date.minutes,  current_date.seconds);
 }

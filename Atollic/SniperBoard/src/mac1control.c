@@ -12,8 +12,9 @@
 #include "ipstk/net.h"
 #include "sys_timer.h"
 #include "mac1control.h"
+#include "sys_usart.h"
 
-#define rasppi
+//#define rasppi
 
 #ifndef rasppi
 #define rdp_count 29
@@ -38,7 +39,12 @@ uint8_t invokeid;
 uint8_t bac_inst;
 #ifndef rasppi
 uint8_t bac_binval[rdp_count] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-uint8_t bac_anaval[rdpa_count] = {0,0,0,0};
+//float bac_anaval[rdpa_count] = {0,0,0,0};
+union {
+	float a;
+	uint8_t bytes[4];
+}bac_anaval[4];
+//uint8_t bac_anaval[4][15];
 #else
 uint8_t bac_binval[rdp_count] = {0,0,0,0,0,0,0,0,0,0};
 uint8_t bac_anaval[rdpa_count] = {0,0};
@@ -46,7 +52,10 @@ uint8_t bac_anaval[rdpa_count] = {0,0};
 uint8_t dip[4];
 uint16_t dport = 47808;
 uint16_t sport = 47808;
+uint16_t bacid = 32403;//9999;//32403;
+uint16_t bacidset = 1;
 uint16_t set_bacnet_bin_alarm =0;
+uint16_t set_bacnet_bin_alarm_active =0;
 uint16_t mac1_pkt_cntr=0;
 
 #ifndef rasppi
@@ -86,6 +95,7 @@ uint16_t readpropa_list[rdpa_count] = {1441,//Analog,:Fire Alarm,
 							1443,//Analog,:Troubles,
 							1445//Analog,:Dirty Sensors
 							};
+
 #else
 uint16_t readprop_list[rdp_count] = {1,//Binary,:Basement Floor Fire,
 							2,//Binary,:Ground Floor Fire,
@@ -105,7 +115,7 @@ uint16_t readpropa_list[rdpa_count] = {1,//Analog,:Fire Alarm,
 #endif
 uint8_t invoke_id_str[rdp_count+rdpa_count];
 
-#define BUFFER_SIZE 800
+#define BUFFER_SIZE 1000
 uint8_t buf1[BUFFER_SIZE+1];
 #define FALSE 0
 #define TRUE 1
@@ -196,11 +206,43 @@ uint8_t allocateIPAddress(uint8_t *buf1, uint16_t buffer_size, uint8_t *mymac, u
   return 1;
 
 }
-
+//float cnv_754(uint32_t ieee754)
+//{
+//	uint32_t temp;
+//	uint8_t sign;
+//	uint16_t exp;
+//	float frac;
+//	sign = 1;
+//	if(ieee754 & 0x80000000)
+//	{
+//		sign = -1;
+//	}
+//	temp = (ieee754 >> 23) & 0x000000FF;
+//	temp -= 127;
+//	exp = 2;
+//	while(temp>1){
+//		exp *= 2;
+//		temp--;
+//	}
+//	temp = ieee754;
+//	uint8_t i;
+//	frac = 1;
+//	for(i=22;i>=0;i--)
+//	{
+//		temp = (ieee754 >> i) & 0x00000001;
+//
+//		frac +=
+//
+//	}
+//
+//
+//
+//}
 void process_bacnet_reply(uint8_t *buf,uint16_t len)
 {
 	//uint8_t bac_length;
 	uint8_t bac_apdu_offset;
+	uint8_t ieee754_byte[4];
 //	uint8_t list_offset;
 //	uint8_t bvlc_len = buf[0x2d];
 //	uint8_t udp_head = 0x29;
@@ -242,7 +284,7 @@ void process_bacnet_reply(uint8_t *buf,uint16_t len)
 						read_list_ptr = i;
 				}
 				if(read_list_ptr == 0xFF){ // Did not find a valid read input number from existing list
-					printf("exit\n");
+					printf("exit %d %d %d \n",readprop_input,buf[bac_apdu_offset+6],buf[bac_apdu_offset+7]);
 
 					return;
 				}
@@ -254,11 +296,12 @@ void process_bacnet_reply(uint8_t *buf,uint16_t len)
 						if(buf[i+1] == 0x29){ // Property Identifier
 							if((buf[i+2] == 0x55) && (buf[i+3] == 0x4E) && (buf[i+4] == 0x91) && (buf[i+6] == 0x4F)){
 								if((bac_binval[read_list_ptr] == 0x00) && (buf[i+5] > 0x01)){
-									set_bacnet_bin_alarm = readprop_list[read_list_ptr];
+									set_bacnet_bin_alarm = 8;//readprop_list[read_list_ptr];
+									set_bacnet_bin_alarm_active = 1;
 								}
 								bac_binval[read_list_ptr] = buf[i+5];
-								printf("Bacnet Binary reply offset %d - %d  - ",i+5, buf[bac_apdu_offset+7]-1);
-								printf("Bacnet Binary status %d:%d:%d:%d:%d:%d:%d:%d:%d:%d\n",bac_binval[0],bac_binval[1],bac_binval[2],bac_binval[3],bac_binval[4],bac_binval[5],bac_binval[6],bac_binval[7],bac_binval[8],bac_binval[9]);
+								printf("Bacnet Binary reply %d\n", buf[bac_apdu_offset+7]);
+								//printf("Bacnet Binary status %d:%d:%d:%d:%d:%d:%d:%d:%d:%d\n",bac_binval[0],bac_binval[1],bac_binval[2],bac_binval[3],bac_binval[4],bac_binval[5],bac_binval[6],bac_binval[7],bac_binval[8],bac_binval[9]);
 								return;
 							}
 						}
@@ -286,17 +329,35 @@ void process_bacnet_reply(uint8_t *buf,uint16_t len)
 
 				i=bac_apdu_offset+8;
 				if(buf[i] == 0x1E){ // Open tag
-
+					//printf("Analog matched 1 %d %d",i,buf[i+4]);
 					while(i<len)
 					{
+						//printf("AM %d %d %d ",i,buf[i+4], len);
 						if(buf[i+1] == 0x29){ // Property Identifier
 							if((buf[i+2] == 0x55) && (buf[i+3] == 0x4E) && (buf[i+4] == 0x44) && (buf[i+9] == 0x4F)){
+							//if((buf[i+2] == 0xA8) && (buf[i+3] == 0x4E) && (buf[i+4] == 0x75) && (buf[i + 5 + buf[i+5] + 1] == 0x4F)){
 //								if((bac_binval[read_list_ptr] == 0x00) && (buf[i+5] > 0x01)){
 //									set_bacnet_bin_alarm = readprop_list[read_list_ptr];
 //								}
-								bac_anaval[read_list_ptr] = (buf[i+5]<<24) |(buf[i+6]<<16) |(buf[i+7]<<8) |(buf[i+8]);
-								printf("Bacnet Analog reply offset %d - %d  - ",i+5, buf[bac_apdu_offset+7]-1);
-								printf(" Value %d,%d,%d,%d \n",buf[i+5] ,buf[i+6] ,buf[i+7] ,buf[i+8]);
+								ieee754_byte[0] = buf[i+5];
+								ieee754_byte[1] = buf[i+6];
+								ieee754_byte[2] = buf[i+7];
+								ieee754_byte[3] = buf[i+8];
+								//printf("Analog matched 3 %d %d",i,buf[i+5]);
+//								uint8_t ana_len  = 0;
+//								while(ana_len<=buf[i+5]){
+//									bac_anaval[read_list_ptr][ana_len] = buf[i+6+ana_len];
+//									ana_len++;
+//								}
+								printf("Bacnet Analog reply %d \n", readpropa_list[read_list_ptr]);
+								//bac_anaval[read_list_ptr] = *(float *)&ieee754_byte;
+								bac_anaval[read_list_ptr].bytes[0] = ieee754_byte[3];
+								bac_anaval[read_list_ptr].bytes[1] = ieee754_byte[2];
+								bac_anaval[read_list_ptr].bytes[2] = ieee754_byte[1];
+								bac_anaval[read_list_ptr].bytes[3] = ieee754_byte[0];
+								//bac_anaval[read_list_ptr] = buf[i+5];//(buf[i+5]<<24) |(buf[i+6]<<16) |(buf[i+7]<<8) |(buf[i+8]);
+								//printf("Bacnet Analog reply offset %d - %d  - ",i+5, buf[bac_apdu_offset+7]-1);
+								//printf(" Value %d,%d,%d,%d \n",buf[i+5] ,buf[i+6] ,buf[i+7] ,buf[i+8]);
 								return;
 							}
 						}
@@ -352,21 +413,37 @@ void mac1_init(void)
 	bac_timeout = Sys_GetTick() + 2000;
 	bacnet_found = 0;
 	invokeid=0;
+	if(SetCfg(&sport, &dport, &bacid)){
+		printf("CFG Success\n");
+		bacidset = 1;
+	}
 }
 void bacnet_whois(void)
 {
 
 	uint16_t i;
 	char whois_pkt[] = {0x81,0x0B,0x00,0x0C,0x01,0x20,0xFF,0xFF,0x00,0x0E,0x10,0x08};
+	char whois_pkt_range[] = {0x81,0x0B,0x00,0x0C,0x01,0x20,0xFF,0xFF,0x00,0x0E,0x10,0x08,0x00,0x00,0x1A,0x00,0x00};
 	dip[0] = myip[0];
 	dip[1] = myip[1];
 	dip[2] = myip[2];
 	dip[3] = 255;
 	send_udp_prepare(buf1,sport,dip,dport);
 	i=0;
-	while(i<sizeof(whois_pkt)){
-		buf1[UDP_DATA_P+i] = whois_pkt[i];
-		i++;
+	if(bacidset){
+		whois_pkt_range[12] = (uint8_t)((bacid & 0xFF00)>>16);
+		whois_pkt_range[13] = (uint8_t)(bacid & 0x00FF);
+		whois_pkt_range[15] = (uint8_t)((bacid & 0xFF00)>>16);
+		whois_pkt_range[16] = (uint8_t)(bacid & 0x00FF);
+		while(i<sizeof(whois_pkt_range)){
+			buf1[UDP_DATA_P+i] = whois_pkt_range[i];
+			i++;
+		}
+	}else{
+		while(i<sizeof(whois_pkt)){
+			buf1[UDP_DATA_P+i] = whois_pkt[i];
+			i++;
+		}
 	}
 	//Force Broadcast
 	buf1[0] = 0xFF;
@@ -378,7 +455,30 @@ void bacnet_whois(void)
 	send_udp_transmit(buf1,sizeof(whois_pkt));
 	//send_udp(buf1,whois_pkt,sizeof(whois_pkt),sport, dip, dport);
 }
-
+uint16_t GetBacInstNum(uint8_t n)
+{
+	return readprop_list[n];
+}
+uint16_t GetBacInstNuma(uint8_t n)
+{
+	return readpropa_list[n];
+}
+uint8_t retrdpcount()
+{
+	return rdp_count;
+}
+uint8_t retrdpacount()
+{
+	return rdpa_count;
+}
+uint8_t retrdpval(uint8_t n)
+{
+	return bac_binval[n];
+}
+float retrdpaval(uint8_t n)
+{
+	return bac_anaval[n].a;
+}
 void bacnet_read_prop(uint8_t id, uint16_t inst, uint8_t analogprop)
 {
 	uint16_t i;
@@ -405,7 +505,7 @@ void bacnet_read_prop(uint8_t id, uint16_t inst, uint8_t analogprop)
 		buf1[UDP_DATA_P+12] = 0x00;
 	}
 	buf1[UDP_DATA_P+8] = id;
-	buf1[UDP_DATA_P+14] = (uint8_t)((inst & 0xFF00)>>8);
+	buf1[UDP_DATA_P+13] = (uint8_t)((inst & 0xFF00)>>8);
 	buf1[UDP_DATA_P+14] = (uint8_t)(inst & 0x00FF);
 	send_udp_transmit(buf1,sizeof(bacrd_pkt));
 }
@@ -423,19 +523,27 @@ void mac1_service(void)
 		}else
 		{
 			if(bac_inst <rdp_count){
+				if(bac_inst == 0)
+				{
+					printf("\n-------------------------------------------------\n");
+				}
 				bacnet_read_prop(invokeid,readprop_list[bac_inst],0);
-				printf("Bacnet read prop %d %d %d Binary \n",invokeid,readprop_list[bac_inst],bac_inst);
+				//printf("Bacnet read prop %d %d %d Binary ",invokeid,readprop_list[bac_inst],bac_inst);
+				printf("Bacnet Read Binary input %d - ",readprop_list[bac_inst]);
 				bac_inst++;
 			}else{
 				bacnet_read_prop(invokeid,readpropa_list[bac_inst-rdp_count],1);
-				printf("Bacnet read prop %d %d %d Analog \n",invokeid,readpropa_list[bac_inst-rdp_count],bac_inst);
+				//printf("Bacnet read prop %d %d %d Analog ",invokeid,readpropa_list[bac_inst-rdp_count],bac_inst);
+				printf("Bacnet Read Analog input %d - ",readpropa_list[bac_inst-rdp_count]);
 				bac_inst++;
 			}
-			bac_timeout = Sys_GetTick() + 2000;
+			bac_timeout = Sys_GetTick() + 400;
 			invoke_id_str[bac_inst] = invokeid++;
 			//}
-			if(bac_inst >= (rdp_count+rdpa_count))
+			if(bac_inst >= (rdp_count+rdpa_count)){
 				bac_inst = 0;
+
+			}
 		}
 
 	}

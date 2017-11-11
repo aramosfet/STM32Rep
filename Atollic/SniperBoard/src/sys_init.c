@@ -165,5 +165,6 @@ void sys_init(void)
 	mySPI1_Init();
 	//Sys_Delay(2000);
 	RTC_Init();
+	GetCfg();
 
 }

@@ -18,6 +18,7 @@
 #include "uip/dhcpc.h"
 #include "uip/Enc424J600NetworkP0.h"
 #include "mac0control.h"
+#include "mac1control.h"
 
 #define DHCP
 
@@ -46,6 +47,50 @@ uint8_t tstpkt0[]  = {0x50,0x4F,0x53,0x54,0x20,0x2F,0x46,0x50,0x57,0x65,0x62,0x5
 uint8_t tstpkt1[]  = {0x50,0x4F,0x53,0x54,0x20,0x2F,0x46,0x50,0x57,0x65,0x62,0x53,0x65,0x72,0x76,0x69,0x63,0x65,0x2F,0x66,0x70,0x73,0x65,0x72,0x76,0x69,0x63,0x65,0x73,0x2F,0x41,0x6C,0x61,0x72,0x6D,0x45,0x76,0x65,0x6E,0x74,0x73,0x2E,0x6A,0x73,0x6F,0x6E,0x2F,0x73,0x61,0x76,0x65,0x41,0x6C,0x61,0x72,0x6D,0x45,0x76,0x65,0x6E,0x74,0x3F,0x62,0x75,0x69,0x6C,0x64,0x69,0x6E,0x67,0x49,0x64,0x3D,0x37,0x26,0x65,0x76,0x65,0x6E,0x74,0x54,0x79,0x70,0x65,0x3D,0x46,0x49,0x52,0x45,0x26,0x65,0x76,0x65,0x6E,0x74,0x44,0x65,0x74,0x61,0x69,0x6C,0x73,0x3D,0x46,0x49,0x52,0x45,0x2B,0x41,0x4C,0x41,0x52,0x4D,0x26,0x65,0x76,0x65,0x6E,0x74,0x47,0x65,0x6E,0x65,0x72,0x61,0x74,0x65,0x64,0x54,0x69,0x6D,0x65,0x49,0x6E,0x4D,0x69,0x6C,0x6C,0x69,0x73,0x3D,0x31,0x35,0x38,0x36,0x36,0x30,0x30,0x35,0x32,0x31,0x37,0x31,0x31,0x26,0x74,0x65,0x73,0x74,0x41,0x6C,0x61,0x72,0x6D,0x3D,0x4E,0x26,0x62,0x75,0x69,0x6C,0x64,0x69,0x6E,0x67,0x46,0x6C,0x6F,0x6F,0x72,0x4E,0x6F,0x3D,0x35,0x20,0x48,0x54,0x54,0x50,0x2F,0x31,0x2E,0x31,0x0D,0x0A,0x41,0x63,0x63,0x65,0x70,0x74,0x3A,0x20,0x61,0x70,0x70,0x6C,0x69,0x63,0x61,0x74,0x69,0x6F,0x6E,0x2F,0x6A,0x73,0x6F,0x6E,0x0D,0x0A,0x55,0x73,0x65,0x72,0x2D,0x41,0x67,0x65,0x6E,0x74,0x3A,0x20,0x4A,0x61,0x76,0x61,0x2F,0x31,0x2E,0x38,0x2E,0x30,0x5F,0x36,0x35,0x0D,0x0A,0x48,0x6F,0x73,0x74,0x3A,0x20,0x31,0x34,0x34,0x2E,0x32,0x31,0x37,0x2E,0x39,0x31,0x2E,0x33,0x32,0x3A,0x38,0x30,0x38,0x30,0x0D,0x0A,0x43,0x6F,0x6E,0x6E,0x65,0x63,0x74,0x69,0x6F,0x6E,0x3A,0x20,0x6B,0x65,0x65,0x70,0x2D,0x61,0x6C,0x69,0x76,0x65,0x0D,0x0A,0x0D,0x0A};
 //Floor 6
 uint8_t tstpkt2[]  = {0x50,0x4F,0x53,0x54,0x20,0x2F,0x46,0x50,0x57,0x65,0x62,0x53,0x65,0x72,0x76,0x69,0x63,0x65,0x2F,0x66,0x70,0x73,0x65,0x72,0x76,0x69,0x63,0x65,0x73,0x2F,0x41,0x6C,0x61,0x72,0x6D,0x45,0x76,0x65,0x6E,0x74,0x73,0x2E,0x6A,0x73,0x6F,0x6E,0x2F,0x73,0x61,0x76,0x65,0x41,0x6C,0x61,0x72,0x6D,0x45,0x76,0x65,0x6E,0x74,0x3F,0x62,0x75,0x69,0x6C,0x64,0x69,0x6E,0x67,0x49,0x64,0x3D,0x37,0x26,0x65,0x76,0x65,0x6E,0x74,0x54,0x79,0x70,0x65,0x3D,0x46,0x49,0x52,0x45,0x26,0x65,0x76,0x65,0x6E,0x74,0x44,0x65,0x74,0x61,0x69,0x6C,0x73,0x3D,0x46,0x49,0x52,0x45,0x2B,0x41,0x4C,0x41,0x52,0x4D,0x26,0x65,0x76,0x65,0x6E,0x74,0x47,0x65,0x6E,0x65,0x72,0x61,0x74,0x65,0x64,0x54,0x69,0x6D,0x65,0x49,0x6E,0x4D,0x69,0x6C,0x6C,0x69,0x73,0x3D,0x31,0x35,0x38,0x36,0x36,0x30,0x30,0x35,0x32,0x31,0x37,0x31,0x31,0x26,0x74,0x65,0x73,0x74,0x41,0x6C,0x61,0x72,0x6D,0x3D,0x4E,0x26,0x62,0x75,0x69,0x6C,0x64,0x69,0x6E,0x67,0x46,0x6C,0x6F,0x6F,0x72,0x4E,0x6F,0x3D,0x36,0x20,0x48,0x54,0x54,0x50,0x2F,0x31,0x2E,0x31,0x0D,0x0A,0x41,0x63,0x63,0x65,0x70,0x74,0x3A,0x20,0x61,0x70,0x70,0x6C,0x69,0x63,0x61,0x74,0x69,0x6F,0x6E,0x2F,0x6A,0x73,0x6F,0x6E,0x0D,0x0A,0x55,0x73,0x65,0x72,0x2D,0x41,0x67,0x65,0x6E,0x74,0x3A,0x20,0x4A,0x61,0x76,0x61,0x2F,0x31,0x2E,0x38,0x2E,0x30,0x5F,0x36,0x35,0x0D,0x0A,0x48,0x6F,0x73,0x74,0x3A,0x20,0x31,0x34,0x34,0x2E,0x32,0x31,0x37,0x2E,0x39,0x31,0x2E,0x33,0x32,0x3A,0x38,0x30,0x38,0x30,0x0D,0x0A,0x43,0x6F,0x6E,0x6E,0x65,0x63,0x74,0x69,0x6F,0x6E,0x3A,0x20,0x6B,0x65,0x65,0x70,0x2D,0x61,0x6C,0x69,0x76,0x65,0x0D,0x0A,0x0D,0x0A};
+				  //FPWebService/fpservices/AlarmEvents.json/saveSoftwareMessage?customerId=1&buildingId=1&eventGeneratedTimeInMillis=1509555335370&deviceId=TESTDEVICE_001&isUpdate=false&value=1281:Binary:UNACKNOWLEDGED FIRE:1,1282:Binary:UNACKNOWLEDGED SUPERVISORY:0,1283:Binary:UNACKNOWLEDGED TROUBLE:1,8:Binary:Basement Floor Fire:0,9:Binary:Ground Floor Fire:0,10:Binary:Service Mezz Fire:0,11:Binary:Mezzonine Fire:0,12:Binary:First Floor Fire:0,13:Binary:Second Floor Fire:0,14:Binary:Third Floor Fire:0,15:Binary:Fourth Floor Fire:0,16:Binary:Fifth Floor Fire:0,17:Binary:Sixth Floor Fire:0,18:Binary:Seventh Floor Fire:0,19:Binary:Eighth Floor Fire:0,20:Binary:Nineth Floor Fire:0,21:Binary:Tenth Floor Fire:0,22:Binary:Eleventh Floor Fire:0,23:Binary:Twelth Floor Fire:0,24:Binary:Thirteenth Floor Fire:0,25:Binary:Fourteenth Floor Fire:0,26:Binary:Service Roof:0,27:Binary:Roof:0,28:Binary:Common Fire:0,29:Binary:Common Trouble:0,1441:Analog:Fire Alarm:1.0,1442:Analog:Supervisory Alarm:0.0,1443:Analog:Troubles:10.0,1445:Analog:Dirty Sensors:0.0,38:Binary:Single Knock Fire:0,39:Binary:Double Knock Fire:0,1002:Binary:AC FAILURE:0,1005:Binary:LOW BATTERY:0
+uint8_t bacpkt[] = {"POST /FPWebService/fpservices/AlarmEvents.json/saveSoftwareMessage?customerId=5&buildingId=7&eventGeneratedTimeInMillis=1509555335370&deviceId=TESTDEVICE_001&isUpdate=true&value="};
+//uint8_t trail[] = {" HTTP/1.1Accept: application/jsonUser-Agent: Java/1.8.0_65Host: 192.99.70.26:9202Connection: keep-alive"};
+uint8_t bacpktf[] = {"POST /FPWebService/fpservices/AlarmEvents.json/saveSoftwareMessage?customerId=5&buildingId=7&eventGeneratedTimeInMillis=1509555335370&deviceId=TESTDEVICE_001&isUpdate=false&value="};
+uint8_t trail[] = {0x48,0x54,0x54,0x50,0x2f,0x31,0x2e,0x31,0x0D,0x0A,0x41,0x63,0x63,0x65,0x70,0x74,0x3a,0x61,0x70,0x70,0x6c,0x69,0x63,0x61,0x74,0x69,0x6f,0x6e,0x2f,0x6a,0x73,0x6f,0x6e,0x0D,0x0A,0x55,0x73,0x65,0x72,0x2d,0x41,0x67,0x65,0x6e,0x74,0x3a,0x4a,0x61,0x76,0x61,0x2f,0x31,0x2e,0x38,0x2e,0x30,0x5f,0x36,0x35,0x48,0x6f,0x73,0x74,0x3a,0x31,0x39,0x32,0x2e,0x39,0x39,0x2e,0x37,0x30,0x2e,0x32,0x36,0x3a,0x39,0x32,0x30,0x32,0x0D,0x0A,0x43,0x6f,0x6e,0x6e,0x65,0x63,0x74,0x69,0x6f,0x6e,0x3a,0x6b,0x65,0x65,0x70,0x2d,0x61,0x6c,0x69,0x76,0x65,0x0D,0x0A,0x0D,0x0A};
+uint16_t bacpktsize=0;
+uint8_t tcp_buf[1000];
+
+const char *readprop_desc[] = 	{"BFF\0",
+								"GFF\0",
+								"SMFF\0",
+								"MFF\0",
+								"1FF\0",
+								"2FF\0",
+								"3FF\0",
+								"4FF\0",
+								"5FF\0",
+								"6FF\0",
+								"7FF\0",
+								"8FF\0",
+								"9FF\0",
+								"10FF\0",
+								"11FF\0",
+								"12FF\0",
+								"13FF\0",
+								"14FF\0",
+								"SRFF\0",
+								"RFF\0",
+								"CFF\0",
+								"CTFF\0",
+								"SKFF\0",
+								"DKFF\0",
+								"ACFA\0",
+								"LOBAT\0",
+								"UF\0",
+								"US\0",
+								"UT\0"
+};
+const char *readpropa_desc[] = {	"FA\0",
+								"SA\0",
+								"TR\0",
+								"DS\0"
+};
+
 uint16_t pkt_in_len;
 uint16_t pktcount;
 uint32_t periodic_timer;
@@ -53,7 +98,8 @@ uint32_t periodic_timer;
 uint8_t macaddr0[6] = {0x48,0x48,0x48,0x48,0x48,0x47};
 uint32_t app_timeout=0;
 //uint8_t tcp_svr_ip[4] = {144,217,91,32};
-uint8_t tcp_svr_ip[4] = {142,44,211,146};  //142.44.211.146
+uint8_t tcp_svr_ip[4] = {192,99,70,26};//{142,44,211,146};//{192,168,1,30};//{142,44,211,146};  //142.44.211.146
+uint16_t tcp_srv_port = 9202;
 volatile uint8_t tcp_app_state = 0; //0 - Not connected, 1- TCP Reg State, 2- TCP Alarm state
 void uipclient_appcall(void){
 	//USART3_Send(0x11);
@@ -64,27 +110,27 @@ void uipclient_appcall(void){
 		uip_send(tstreg,sizeof(tstreg));
 		//uip_close();
 		tcp_app_state = 0;
-		printf("uip client send reg \n");
+		//printf("uip client send reg \n");
 	}else if(tcp_app_state == 2){
 		uip_send(tstpkt0,300);
 		//uip_stop();
 		tcp_app_state = 0;
-		printf("uip client send alarm 2\n");
+		//printf("uip client send alarm 2\n");
 	}else if(tcp_app_state == 3){
 		uip_send(tstpkt1,300);
 		//uip_stop();
 		tcp_app_state = 0;
-		printf("uip client send alarm 3\n");
+		//printf("uip client send alarm 3\n");
 	}else if(tcp_app_state == 4){
-		uip_send(tstpkt2,300);
+		uip_send(tcp_buf,bacpktsize);
 		//uip_stop();
 		tcp_app_state = 0;
-		printf("uip client send alarm 4\n");
+		//printf("uip client send alarm 4\n");
 	}else
 	{
 		uip_close();
 		tcp_app_state = 0;
-		printf("Closing TCP\n");
+		//printf("Closing TCP\n");
 	}
 
 }
@@ -147,7 +193,7 @@ void mac0_tick(void)
 //					printf("\n -- \n");
 //				}
 				enc424j600PacketSendP0(uip_len, uip_buf);
-				//printf("uip input reply pkt send \n");
+				//printf("uip input reply pkt send %d\n",uip_len);
 			}
 		}else if(BUF->type == htons(UIP_ETHTYPE_ARP))
 		{
@@ -208,7 +254,7 @@ uint8_t connect(uint8_t* ip, uint16_t port)
   uip_ip_addr(ipaddr, ip);
   struct uip_conn* conn = uip_connect(&ipaddr, htons(port));
   uint32_t timeout = Sys_GetTick() + 4000;
-  printf("Inside Connect 1\n");
+  //printf("Inside Connect 1\n");
   mac0_tick();
   if (conn)
   {
@@ -222,13 +268,13 @@ uint8_t connect(uint8_t* ip, uint16_t port)
             {
 //              data = (uip_userdata_t*) conn->appstate;
 
-              printf("connected, state: waiting to close");
+              //printf("connected, state: waiting to close");
               //printf(", first packet in: ");
               //while((conn->tcpstateflags & UIP_TS_MASK) != UIP_CLOSED){
 			//	mac0_tick();
 				//printf(".%d\n",conn->tcpstateflags);
              // }
-              printf("Closed TCP %d\n",conn->tcpstateflags);
+              printf("TCP Close - Success\n");
               return 1;
             }
 
@@ -342,12 +388,234 @@ void mac0_init(void)
 	//uip_gethostaddr(uip_netmask);
 #endif
 	printf("Init Complete Port 0\n");
+	if(SetCfgSrv(tcp_svr_ip, &tcp_srv_port))
 	app_timeout = Sys_GetTick() + 10000;
 	tcp_app_state = 0;
 
 }
 
+void build_bac_tcp_pkt(uint8_t tf)
+{
+	uint16_t i=0;
+	uint8_t n,k;
+	uint16_t temp;
+	uint8_t print=0;
+	float tempa;
+	if(tf){
+		while(i<sizeof(bacpkt))
+		{
+			tcp_buf[i] = bacpkt[i];
+			i++;
+		}
+	}else{
+		while(i<sizeof(bacpktf))
+		{
+			tcp_buf[i] = bacpktf[i];
+			i++;
+		}
+	}
+	i-=1;
 
+	for(n=0;n<retrdpcount()-10;n++)
+	//for(n=0;n<1;n++)
+	{
+
+		// Insert Instance number
+		temp = GetBacInstNum(n);
+		//printf("\nTemp  %d\n",temp);
+		k=0;
+		while(temp >= 1000){
+			k++;
+			temp -= 1000;
+		}
+		//printf("Test k %d \n",k);
+		if(k>0)
+			tcp_buf[i++] = k + '0';
+		k=0;
+		while(temp >= 100){
+			k++;
+			temp -= 100;
+		}
+		//printf("Test k %d \n",k);
+		if(k>0)
+			tcp_buf[i++] = k + '0';
+		k=0;
+		while(temp >= 10){
+			k++;
+			temp -= 10;
+		}
+		//printf("Test k %d \n",k);
+		if(k>0)
+			tcp_buf[i++] = k + '0';
+		tcp_buf[i++] = temp + '0';
+
+		tcp_buf[i++] = '%';
+		tcp_buf[i++] = '3';
+		tcp_buf[i++] = 'A';
+		tcp_buf[i++] = 'B';
+		tcp_buf[i++] = 'i';
+		tcp_buf[i++] = 'n';
+		tcp_buf[i++] = 'a';
+		tcp_buf[i++] = 'r';
+		tcp_buf[i++] = 'y';
+		tcp_buf[i++] = '%';
+		tcp_buf[i++] = '3';
+		tcp_buf[i++] = 'A';
+		temp = 0;
+		while(readprop_desc[n][temp] != '\0')
+		{
+			tcp_buf[i++] = readprop_desc[n][temp++];
+		}
+		//printf("Test 4 %d \n",n);
+		tcp_buf[i++] = '%';
+		tcp_buf[i++] = '3';
+		tcp_buf[i++] = 'A';
+		temp = retrdpval(n);
+		if(temp>0){
+			tcp_buf[i++] = '1';
+		}else
+		{
+			tcp_buf[i++] = '0';
+		}
+		tcp_buf[i++] = '%';
+		tcp_buf[i++] = '2';
+		tcp_buf[i++] = 'C';
+	}
+	for(n=0;n<retrdpacount();n++)
+	{
+
+		// Insert Instance number
+		temp = GetBacInstNuma(n);
+		//printf("\nTemp  %d\n",temp);
+		k=0;
+		while(temp >= 1000){
+			k++;
+			temp -= 1000;
+		}
+		//printf("Test k %d \n",k);
+		if(k>0)
+			tcp_buf[i++] = k + '0';
+		k=0;
+		while(temp >= 100){
+			k++;
+			temp -= 100;
+		}
+		//printf("Test k %d \n",k);
+		if(k>0)
+			tcp_buf[i++] = k + '0';
+		k=0;
+		while(temp >= 10){
+			k++;
+			temp -= 10;
+		}
+		//printf("Test k %d \n",k);
+		if(k>0)
+			tcp_buf[i++] = k + '0';
+		tcp_buf[i++] = temp + '0';
+
+		tcp_buf[i++] = '%';
+		tcp_buf[i++] = '3';
+		tcp_buf[i++] = 'A';
+		tcp_buf[i++] = 'A';
+		tcp_buf[i++] = 'n';
+		tcp_buf[i++] = 'a';
+		tcp_buf[i++] = 'l';
+		tcp_buf[i++] = 'o';
+		tcp_buf[i++] = 'g';
+		tcp_buf[i++] = '%';
+		tcp_buf[i++] = '3';
+		tcp_buf[i++] = 'A';
+		temp = 0;
+		while(readpropa_desc[n][temp] != '\0')
+		{
+			tcp_buf[i++] = readpropa_desc[n][temp++];
+		}
+		//printf("Test 4 %d \n",n);
+		tcp_buf[i++] = '%';
+		tcp_buf[i++] = '3';
+		tcp_buf[i++] = 'A';
+		tempa = retrdpaval(n);
+//		uint8_t m;
+//		for(m=1;m<15;m++)
+//		{
+//			if(tempa[m] == 0x4F)
+//				break;
+//			else
+//				tcp_buf[i++] = tempa[m];
+//		}
+		//printf("Float %d",(int)tempa);
+		tempa *= 10;
+		if(tempa<0)
+		{
+			tcp_buf[i++] = '-';
+			tempa *= -1;
+		}
+		//printf("\nTemp  %d\n",temp);
+		k=0;
+		print =0;
+		while(tempa >= 100000){
+			k++;
+			tempa -= 100000;
+		}
+		//printf("Test 1 k %d \n",k);
+		if(k>0)
+			print = 1;
+		if(print)
+			tcp_buf[i++] = k + '0';
+		k=0;
+		while(tempa >= 10000){
+			k++;
+			tempa -= 10000;
+		}
+		//printf("Test 2 k %d \n",k);
+		if(k>0)
+			print = 1;
+		if(print)
+			tcp_buf[i++] = k + '0';
+		k=0;
+		while(tempa >= 1000){
+			k++;
+			tempa -= 1000;
+		}
+		//printf("Test 3 k %d \n",k);
+		if(k>0)
+			print = 1;
+		if(print)
+			tcp_buf[i++] = k + '0';
+		k=0;
+		while(tempa >= 100){
+			k++;
+			tempa -= 100;
+		}
+		//printf("Test 4 k %d \n",k);
+		if(k>0)
+			print = 1;
+		if(print)
+			tcp_buf[i++] = k + '0';
+		k=0;
+		while(tempa >= 10){
+			k++;
+			tempa -= 10;
+		}
+		//printf("Test 5 k %d \n",k);
+
+		tcp_buf[i++] = k + '0';
+		tcp_buf[i++] = '.';
+		tcp_buf[i++] = tempa + '0';
+
+		tcp_buf[i++] = '%';
+		tcp_buf[i++] = '2';
+		tcp_buf[i++] = 'C';
+	}
+	tcp_buf[i-1] = '0';
+	uint16_t p=0;
+	while(p<(sizeof(trail)-1))
+	{
+		tcp_buf[i++] = trail[p++];
+	}
+	bacpktsize = i;
+	//printf("\n pkt size : %d\n",bacpktsize);
+}
 void mac0_service(uint8_t tcp_service_enable, uint8_t reg, uint8_t alarm_id)
 {
 	uint8_t conn_stat;
@@ -355,34 +623,69 @@ void mac0_service(uint8_t tcp_service_enable, uint8_t reg, uint8_t alarm_id)
 	{
 		//if((app_timeout < Sys_GetTick()) && (tcp_app_state == 0) && (reg == 1)){
 		if((tcp_app_state == 0) && (reg == 1)){
-			printf("Connecting tcp server for periodic reg pkt\n");
+			printf("Connecting tcp server for periodic reg pkt - ");
 			tcp_app_state = 1;
-			conn_stat = connect(tcp_svr_ip, 8080);
+			conn_stat = connect(tcp_svr_ip, tcp_srv_port);
 			if(!conn_stat){
-				printf("Failed connection\n");
-				connect(tcp_svr_ip, 8080);
+				printf("Failed connection. Retrying..\n");
+				if(!connect(tcp_svr_ip, tcp_srv_port)){
+					printf("Failed Exiting\n");
+				}
 			}
 			app_timeout = Sys_GetTick() + 50000;
 		}else if(alarm_id == 2){
-			printf("Connecting tcp server for fire alarm pkt\n");
+			printf("Connecting tcp server for fire alarm pkt - ");
 			update_timestamp(tstpkt0);
 			tcp_app_state = 2;
-			while(!connect(tcp_svr_ip, 8080));
+			while(!connect(tcp_svr_ip, tcp_srv_port));
 			printf("Connected\n");
 
 		}else if(alarm_id == 4){
-			printf("Connecting tcp server for fire alarm pkt Floor 5\n");
+			printf("Connecting tcp server for fire alarm pkt - ");
 			update_timestamp(tstpkt1);
 			tcp_app_state = 3;
-			while(!connect(tcp_svr_ip, 8080));
+			conn_stat = connect(tcp_svr_ip, tcp_srv_port);
+			if(!conn_stat){
+				printf("Failed connection. Retrying..\n");
+				if(!connect(tcp_svr_ip, tcp_srv_port)){
+					printf("Failed Exiting\n");
+				}
+			}
+			//while(!connect(tcp_svr_ip, tcp_srv_port));
 			printf("Connected\n");
 		 }else if(alarm_id == 8){
-			printf("Connecting tcp server for fire alarm pkt Floor 6\n");
-			update_timestamp(tstpkt2);
+			printf("Connecting tcp server for Periodic bacnet status - ");
+			update_timestamp(bacpkt);
+			build_bac_tcp_pkt(1);
 			tcp_app_state = 4;
-			while(!connect(tcp_svr_ip, 8080));
-			printf("Connected\n");
-		 }
+			//while(!connect(tcp_svr_ip, tcp_srv_port));
+			conn_stat = connect(tcp_svr_ip, tcp_srv_port);
+			if(!conn_stat){
+				printf("Failed connection. Retrying..\n");
+				if(!connect(tcp_svr_ip, tcp_srv_port)){
+					printf("Failed Exiting\n");
+				}
+			}
+//			for(uint16_t l=0; l<bacpktsize;l++)
+//				USART1_Send(tcp_buf[l]);
+//			printf("\nConnected\n");
+		 }else if(alarm_id == 9){
+				printf("Connecting tcp server for bacnet registration - ");
+				update_timestamp(bacpkt);
+				build_bac_tcp_pkt(0);
+				tcp_app_state = 4;
+				//while(!connect(tcp_svr_ip, tcp_srv_port));
+				conn_stat = connect(tcp_svr_ip, tcp_srv_port);
+				if(!conn_stat){
+					printf("Failed connection. Retrying..\n");
+					if(!connect(tcp_svr_ip, tcp_srv_port)){
+						printf("Failed Exiting\n");
+					}
+				}
+//				for(uint16_t l=0; l<bacpktsize;l++)
+//					USART1_Send(tcp_buf[l]);
+//				printf("\nConnected\n");
+			 }
 	}
 	uip_arp_timer();
 }

@@ -39,7 +39,8 @@ SOFTWARE.
 #define STM32F10X_MD_VL
 /* Private typedef */
 /* Private define  */
-extern uint8_t set_bacnet_bin_alarm;
+extern uint16_t set_bacnet_bin_alarm;
+extern uint8_t set_bacnet_bin_alarm_active;
 /* Private macro */
 /* Private variables */
 
@@ -59,6 +60,7 @@ int main()
 {
 	//uint8_t mode;
 	uint32_t display_timeout;
+	uint32_t tcp_timeout;
 	sys_init();
 	printf("\n-------------------------\n");
 	printf("Starting Ethernet Init \n");
@@ -66,10 +68,19 @@ int main()
 	mac1_init();
 	Sys_Delay(100);
 	printf("Init completed\n");
+	tcp_timeout = Sys_GetTick() + 8000;
 	mac0_service(1,1,0);
+	while(tcp_timeout>Sys_GetTick()){
+		mac0_tick();
+	}
 	//set_date();
 	//mode = 0;
-
+	//Sys_Delay(5000);
+	tcp_timeout = Sys_GetTick() + 8000;
+	mac0_service(1,0,9);
+	while(tcp_timeout>Sys_GetTick()){
+		mac0_tick();
+	}
 	while(1)
 	{
 		//Sys_Delay(1000);
@@ -83,20 +94,21 @@ int main()
 		if(set_bacnet_bin_alarm)
 		{
 			printf("Bacnet Alarm %d \n",set_bacnet_bin_alarm);
-			mac0_service(1,0,set_bacnet_bin_alarm);
-			set_bacnet_bin_alarm = 0;
+			mac0_service(set_bacnet_bin_alarm_active,0,set_bacnet_bin_alarm);
+			set_bacnet_bin_alarm_active = 0;
 		}else if(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_3))
 		{
 			printf("Bacnet Alarm %d \n",set_bacnet_bin_alarm);
-			mac0_service(1,0,8);
+			mac0_service(1,0,4);
 		}
 
 		mac1_service();
 //		printf("-\r");
-		if((display_timeout%10000) == 0){
+		if((display_timeout%20000) == 0){
 			get_RTC();
 			display_date();
 			printf(" : \n");
+			mac0_service(1,0,8);
 		}
 		//printf("\n");
 		//Time_Show();
